@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import MoodAssessment from "./pages/MoodAssessment";
+import AssessmentResults from "./pages/AssessmentResults";
 import Games from "./pages/Games";
 import BubblePopper from "./pages/games/BubblePopper";
 import ZenGarden from "./pages/games/ZenGarden";
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/mood-assessment" element={<MoodAssessment />} />
+          <Route path="/results" element={<AssessmentResults />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/bubble-popper" element={<BubblePopper />} />
           <Route path="/games/zen-garden" element={<ZenGarden />} />

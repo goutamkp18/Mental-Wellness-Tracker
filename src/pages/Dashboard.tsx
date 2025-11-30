@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, Gamepad2, LineChart, LogOut, Sparkles, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
+  const [assessmentHistory, setAssessmentHistory] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -33,6 +35,20 @@ const Dashboard = () => {
 
       if (profile) {
         setUserName(profile.full_name || "Friend");
+      }
+
+      // Fetch assessment history
+      const { data: assessments, error } = await supabase
+        .from("mood_assessments")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: true })
+        .limit(10);
+
+      if (error) {
+        console.error("Error fetching assessments:", error);
+      } else if (assessments) {
+        setAssessmentHistory(assessments);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -154,10 +170,87 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <LineChart className="w-16 h-16 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Complete your first mood assessment to see your wellness metrics here.</p>
-                </div>
+                {assessmentHistory.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="h-72 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsLineChart
+                          data={assessmentHistory.map((assessment, index) => ({
+                            name: `Assessment ${index + 1}`,
+                            score: assessment.overall_score,
+                            date: new Date(assessment.created_at).toLocaleDateString(),
+                            time: new Date(assessment.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }),
+                          }))}
+                          margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                          <XAxis
+                            dataKey="name"
+                            stroke="rgba(0,0,0,0.5)"
+                            style={{ fontSize: "12px" }}
+                          />
+                          <YAxis
+                            stroke="rgba(0,0,0,0.5)"
+                            domain={[0, 50]}
+                            style={{ fontSize: "12px" }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "rgba(255, 255, 255, 0.95)",
+                              borderRadius: "8px",
+                              border: "1px solid rgba(0,0,0,0.1)",
+                              fontSize: "12px",
+                            }}
+                            formatter={(value) => [`Score: ${value}`, ""]}
+                            labelFormatter={(label) => `${label}`}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="score"
+                            stroke="#8B5CF6"
+                            dot={{ fill: "#8B5CF6", r: 5 }}
+                            activeDot={{ r: 7 }}
+                            strokeWidth={2}
+                          />
+                        </RechartsLineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {assessmentHistory.slice(-3).reverse().map((assessment, index) => (
+                        <div
+                          key={assessment.id}
+                          className="p-3 rounded-lg bg-muted/50 border border-border/50"
+                        >
+                          <p className="text-xs font-semibold text-primary">
+                            Assessment {assessmentHistory.length - index}
+                          </p>
+                          <p className="text-lg font-bold text-foreground">
+                            {assessment.overall_score}/50
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(assessment.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(assessment.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <LineChart className="w-16 h-16 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">
+                      Complete your first mood assessment to see your wellness metrics here.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
