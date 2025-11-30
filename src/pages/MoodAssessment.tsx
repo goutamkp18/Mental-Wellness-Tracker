@@ -110,7 +110,7 @@ const MoodAssessment = () => {
         description: "Your wellness insights have been generated.",
       });
 
-      navigate("/results", { state: { results: data } });
+      navigate("/results", { state: { results: data, responses: responses, selectedQuestions: selectedQuestions } });
     } catch (error: any) {
       toast({
         title: "Error",
